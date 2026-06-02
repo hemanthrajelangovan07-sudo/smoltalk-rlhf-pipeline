@@ -9,8 +9,7 @@
 ![Platform](https://img.shields.io/badge/Platform-Kaggle%20%7C%20Colab-orange?logo=googlecolab)
 ![Model](https://img.shields.io/badge/Model-Qwen2.5--1.5B-9cf?logo=huggingface)
 [![HuggingFace](https://img.shields.io/badge/🤗_Models-hemanthrajelangovan-FFD21E)](https://huggingface.co/hemanthrajelangovan)
-[![W&B](https://img.shields.io/badge/Weights_%26_Biases-rlhf--simpo--grpo--2026-yellow?logo=weightsandbiases)]([https://wandb.ai/hemanthrajelangovan07](https://wandb.ai/hemanthrajelangovan07-sathyabama-institute-of-science-an/rlhf-simpo-grpo-2026?nw=nwuserhemanthrajelangovan07))
-
+[![W&B](https://img.shields.io/badge/Weights_%26_Biases-rlhf--simpo--grpo--2026-yellow?logo=weightsandbiases)](https://wandb.ai/hemanthrajelangovan07-sathyabama-institute-of-science-an/rlhf-simpo-grpo-2026?nw=nwuserhemanthrajelangovan07)
 ---
 
 ## Table of Contents
