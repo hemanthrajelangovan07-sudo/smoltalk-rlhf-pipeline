@@ -44,24 +44,29 @@ The target model is **Qwen2.5-1.5B-Instruct**. All training uses Unsloth's 4-bit
 ---
 
 ## Pipeline Architecture
-
-Each stage is a self-contained notebook. Datasets are quality-filtered once in `1_data_pipeline.py` and reloaded per stage. LoRA adapters are pushed to HuggingFace Hub after each stage, so any stage can resume from a checkpoint without rerunning prior stages.
-
+ 
 ```mermaid
 flowchart LR
-    A[Base Model\nQwen2.5-1.5B-Instruct] --> B[SFT\nSmolTalk 15K\nInstruction Following]
-    B -->|LoRA → 🤗 Hub| C[SimPO\nUltraFeedback top-5K\nPreference Alignment]
-    C -->|LoRA → 🤗 Hub| D[GRPO\nGSM8K 7K+\nReasoning & Math]
-    D -->|LoRA → 🤗 Hub| E[Evaluation\nGSM8K Acc + Win Rate]
-    E --> F[Merge & Push\nFull-precision → 🤗 Hub]
-
-    style A fill:#e3f2fd,stroke:#1565c0
-    style B fill:#e8f5e9,stroke:#2e7d32
-    style C fill:#fff3e0,stroke:#e65100
-    style D fill:#fce4ec,stroke:#c62828
-    style E fill:#f3e5f5,stroke:#6a1b9a
-    style F fill:#e8eaf6,stroke:#283593
+    A["**Stage 0**\nBase Model\nQwen2.5-1.5B-Instruct\n4-bit NF4 · Unsloth"]
+    B["**Stage 1 · SFT**\nInstruction Tuning\nSmolTalk 15K\nrsLoRA rank-64"]
+    C["**Stage 2 · SimPO**\nPreference Alignment\nUltraFeedback 5K\nCPOTrainer"]
+    D["**Stage 3 · GRPO**\nReasoning & Math\nGSM8K 7K+\nGRPOTrainer"]
+    E["**Stage 4 · Eval**\nEvaluation\nGSM8K acc\n+ win rate"]
+    F["**Stage 5**\nMerge & Push\nfloat16 → 🤗 Hub"]
+ 
+    A -->|"LoRA → 🤗"| B
+    B -->|"LoRA → 🤗"| C
+    C -->|"LoRA → 🤗"| D
+    D --> E
+    E --> F
 ```
+
+<p align="center">
+  <a href="https://hemanthrajelangovan.github.io/YOUR-REPO-NAME/pipeline_diagram.html">
+    <img src="https://img.shields.io/badge/View%20Interactive%20Pipeline-1d9e75?style=for-the-badge&logo=html5&logoColor=white" alt="View Interactive Pipeline Diagram"/>
+  </a>
+</p>
+
 
 > [!NOTE]
 > The Hub round-trips between stages are load-bearing — each notebook loads the prior stage's adapter from `hemanthrajelangovan/Qwen2.5-1.5B-{STAGE}-2026` rather than from local disk. This makes the pipeline resumable on fresh kernels.
@@ -422,3 +427,16 @@ MIT License. See [LICENSE](./LICENSE) for details.
 - [Qwen Team](https://qwenlm.github.io/) — Qwen2.5 base and instruct models (1.5B and 72B judge)
 - [Weights & Biases](https://wandb.ai) — Experiment tracking across all three stages
 - **Datasets:** [SmolTalk](https://huggingface.co/datasets/HuggingFaceTB/smoltalk) · [UltraFeedback Binarized](https://huggingface.co/datasets/trl-lib/ultrafeedback_binarized) · [GSM8K](https://github.com/openai/gsm8k)
+
+---
+
+## Author
+
+**Hemanth Raj**
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/hemanth-raj-21811b2b5)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat&logo=github)](https://github.com/hemanthrajelangovan07-sudo)
+[![Email](https://img.shields.io/badge/Email-Contact-EA4335?style=flat&logo=gmail)](mailto:hemanthrajelangovan07@gmail.com)
+
+---
+
