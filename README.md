@@ -75,14 +75,14 @@ flowchart LR
 
 ## Key Features
 
-- 🚀 **End-to-end alignment pipeline** — One base model through SFT, offline preference optimization, and online RL, all on free GPU hardware
-- ⚡ **Unsloth-accelerated 4-bit LoRA** — ~2× throughput and ~50% less VRAM vs vanilla transformers; `lora_alpha = 2 × rank = 128` for aggressive learning
-- 🧠 **Four GRPO reward signals** — Correctness (weight 2.0), format quality (0.3), repetition penalty (1.0), and verbosity penalty (0.5) with configurable weights
-- 📊 **Partial-credit reward shaping** — `reward_correctness` awards `0.5` for wrong answers with valid reasoning structure, not just `1.0`/`0.0` binary scoring
-- 🪪 **Kaggle/Colab hardened** — Keep-alive heartbeat, offline W&B fallback, Hub-based checkpoint resume, and a 30-min max data-loss window on crash
-- 🧪 **Two-signal evaluation** — GSM8K accuracy (100 samples) plus pairwise win-rate judged by `Qwen2.5-72B-Instruct`
-- 📦 **Hub-native persistence** — Every stage pushes its LoRA adapter immediately after training; merge-and-publish runs separately on Colab
-- 🔄 **Stage-isolated TRL versions** — SFT and SimPO use `trl>=1.0.0`; GRPO notebook uninstalls and reinstalls the correct TRL version independently
+- **End-to-end alignment pipeline** — One base model through SFT, offline preference optimization, and online RL, all on free GPU hardware
+- **Unsloth-accelerated 4-bit LoRA** — ~2× throughput and ~50% less VRAM vs vanilla transformers; `lora_alpha = 2 × rank = 128` for aggressive learning
+- **Four GRPO reward signals** — Correctness (weight 2.0), format quality (0.3), repetition penalty (1.0), and verbosity penalty (0.5) with configurable weights
+- **Partial-credit reward shaping** — `reward_correctness` awards `0.5` for wrong answers with valid reasoning structure, not just `1.0`/`0.0` binary scoring
+- **Kaggle/Colab hardened** — Keep-alive heartbeat, offline W&B fallback, Hub-based checkpoint resume, and a 30-min max data-loss window on crash
+- **Two-signal evaluation** — GSM8K accuracy (100 samples) plus pairwise win-rate judged by `Qwen2.5-72B-Instruct`
+- **Hub-native persistence** — Every stage pushes its LoRA adapter immediately after training; merge-and-publish runs separately on Colab
+- **Stage-isolated TRL versions** — SFT and SimPO use `trl>=1.0.0`; GRPO notebook uninstalls and reinstalls the correct TRL version independently
 
 ---
 
