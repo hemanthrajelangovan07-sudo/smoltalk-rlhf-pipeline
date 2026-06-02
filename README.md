@@ -62,7 +62,7 @@ flowchart LR
 ```
 
 <p align="center">
-  <a href="hemanthrajelangovan.github.io/smoltalk-rlhf-pipeline/pipeline_diagram.html">
+  <a href="https://htmlpreview.github.io/?https://github.com/hemanthrajelangovan/smoltalk-rlhf-pipeline/blob/main/pipeline_diagram.html">
     <img src="https://img.shields.io/badge/View%20Interactive%20Pipeline-1d9e75?style=for-the-badge&logo=html5&logoColor=white" alt="View Interactive Pipeline Diagram"/>
   </a>
 </p>
