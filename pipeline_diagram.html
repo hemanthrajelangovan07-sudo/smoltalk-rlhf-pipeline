@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostTraining 2026 — Pipeline Architecture</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #181c27;
+    --bg3: #1e2335;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --text2: #9399a8;
+    --text3: #5c6070;
+    --teal-fill: #0d3d30;   --teal-stroke: #1d9e75; --teal-text: #5dcaa5;
+    --amber-fill: #3a2400;  --amber-stroke: #ba7517; --amber-text: #ef9f27;
+    --coral-fill: #3a120a;  --coral-stroke: #993c1d; --coral-text: #f0997b;
+    --purple-fill: #1e1540; --purple-stroke: #7f77dd; --purple-text: #afa9ec;
+    --blue-fill:   #07203a; --blue-stroke:  #378add; --blue-text:  #85b7eb;
+    --gray-fill:   #1c1e26; --gray-stroke:  #5f5e5a; --gray-text:  #b4b2a9;
+    --green-fill:  #0f2606; --green-stroke: #3b6d11; --green-text: #97c459;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 36px; }
+  .header h1 {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.3px;
+    background: linear-gradient(135deg, #e8eaf0 0%, #9399a8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .header p { font-size: 13px; color: var(--text2); }
+  .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    border: 1px solid var(--border2); color: var(--text2);
+    background: var(--bg2); letter-spacing: 0.2px;
+  }
+
+  /* ── Main card ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%; max-width: 860px;
+    padding: 32px 28px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--text3);
+    margin-bottom: 24px;
+  }
+
+  /* ── Pipeline flow ── */
+  .pipeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 28px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .stage-wrap { display: flex; align-items: center; }
+  .stage {
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; cursor: pointer;
+  }
+  .stage-box {
+    border-radius: 10px;
+    border: 1px solid;
+    padding: 12px 14px;
+    min-width: 106px;
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+  }
+  .stage-box:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+  .stage-box.active { transform: translateY(-2px); }
+
+  .stage-box .tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; margin-bottom: 5px; opacity: 0.7;
+  }
+  .stage-box .label { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .stage-box .sub   { font-size: 11px; opacity: 0.65; line-height: 1.45; }
+
+  .s-base   { background: var(--gray-fill);   border-color: var(--gray-stroke);   color: var(--gray-text); }
+  .s-sft    { background: var(--teal-fill);   border-color: var(--teal-stroke);   color: var(--teal-text); }
+  .s-simpo  { background: var(--amber-fill);  border-color: var(--amber-stroke);  color: var(--amber-text); }
+  .s-grpo   { background: var(--coral-fill);  border-color: var(--coral-stroke);  color: var(--coral-text); }
+  .s-eval   { background: var(--purple-fill); border-color: var(--purple-stroke); color: var(--purple-text); }
+  .s-merge  { background: var(--blue-fill);   border-color: var(--blue-stroke);   color: var(--blue-text); }
+
+  /* arrows between stages */
+  .arrow-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding-top: 28px;
+    min-width: 40px;
+  }
+  .arrow-line {
+    width: 40px; height: 1px;
+    background: var(--border2);
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '';
+    position: absolute; right: -4px; top: -3px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid var(--border2);
+  }
+  .arrow-label {
+    font-size: 9px; color: var(--text3); text-align: center;
+    margin-top: 4px; letter-spacing: 0.3px; white-space: nowrap;
+  }
+
+  /* ── Hub row ── */
+  .hub-row {
+    border: 1px dashed var(--border2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .hub-label {
+    font-size: 11px; font-weight: 600; color: var(--text2);
+    letter-spacing: 0.5px; white-space: nowrap;
+    margin-right: 18px; min-width: 120px;
+  }
+  .hub-adapters { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+  .hub-chip {
+    font-size: 11px; padding: 5px 12px; border-radius: 20px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--text2); cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .hub-chip:hover { border-color: var(--text2); color: var(--text); }
+  .hub-chip .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .dot-teal   { background: var(--teal-stroke); }
+  .dot-amber  { background: var(--amber-stroke); }
+  .dot-coral  { background: var(--coral-stroke); }
+
+  /* ── Benchmark table ── */
+  .bench-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    text-align: left; padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  tbody tr { transition: background 0.1s; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody td {
+    font-size: 13px; color: var(--text2);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr.best td { color: var(--text); }
+  tbody tr.best td:first-child { color: var(--green-text); font-weight: 600; }
+  .acc-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .acc-bar-bg {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: var(--bg3); overflow: hidden; min-width: 60px;
+  }
+  .acc-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .acc-num { font-size: 13px; min-width: 36px; text-align: right; }
+  .win-chip {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 10px; font-weight: 500;
+  }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 18px 20px;
+    margin-bottom: 28px;
+    transition: opacity 0.2s;
+  }
+  .detail-panel h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .detail-panel p  { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 8px; }
+  .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; }
+  .detail-stat {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+  }
+  .detail-stat .sk { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+  .detail-stat .sv { font-size: 15px; font-weight: 600; }
+
+  footer { font-size: 11px; color: var(--text3); margin-top: 16px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>PostTraining 2026 — RLHF / SimPO / GRPO Pipeline</h1>
+  <p>Fine-tune Qwen2.5-1.5B through the full post-training stack on free T4/P100 GPUs</p>
+  <div class="badges">
+    <span class="badge">Python 3.10+</span>
+    <span class="badge">PyTorch 2.x</span>
+    <span class="badge">CUDA 12.x</span>
+    <span class="badge">Qwen2.5-1.5B</span>
+    <span class="badge">Unsloth 4-bit LoRA</span>
+    <span class="badge">Kaggle · Colab</span>
+    <span class="badge">MIT License</span>
+  </div>
+</div>
+
+<!-- Pipeline stages card -->
+<div class="card">
+  <div class="card-title">Pipeline Architecture — click any stage for details</div>
+
+  <div class="pipeline" id="pipeline">
+    <!-- Base -->
+    <div class="stage-wrap">
+      <div class="stage" onclick="showDetail('base')">
+        <div class="stage-box s-base" id="box-base">
+          <div class="tag">Stage 0</div>
+          <div class="label">Base Model</div>
+          <div class="sub">Qwen2.5-1.5B<br>Instruct</div>
+        </div>
+      </div>
+    </div>
+    <!-- → -->
+    <div class="arrow-wrap"><div class="arrow-line"></div></div>
+    <!-- SFT -->
+    <div class="stage-wrap">
+      <div class="stage" onclick="showDetail('sft')">
+        <div class="stage-box s-sft" id="box-sft">
+          <div class="tag">Stage 1 · SFT</div>
+          <div class="label">Instruction Tuning</div>
+          <div class="sub">SmolTalk 15K<br>rsLoRA rank-64</div>
+        </div>
+      </div>
+    </div>
+    <!-- LoRA → -->
+    <div class="arrow-wrap">
+      <div class="arrow-line"></div>
+      <div class="arrow-label">LoRA → 🤗</div>
+    </div>
+    <!-- SimPO -->
+    <div class="stage-wrap">
+      <div class="stage" onclick="showDetail('simpo')">
+        <div class="stage-box s-simpo" id="box-simpo">
+          <div class="tag">Stage 2 · SimPO</div>
+          <div class="label">Preference Align</div>
+          <div class="sub">UltraFeedback 5K<br>CPOTrainer</div>
+        </div>
+      </div>
+    </div>
+    <!-- LoRA → -->
+    <div class="arrow-wrap">
+      <div class="arrow-line"></div>
+      <div class="arrow-label">LoRA → 🤗</div>
+    </div>
+    <!-- GRPO -->
+    <div class="stage-wrap">
+      <div class="stage" onclick="showDetail('grpo')">
+        <div class="stage-box s-grpo" id="box-grpo">
+          <div class="tag">Stage 3 · GRPO</div>
+          <div class="label">Reasoning &amp; Math</div>
+          <div class="sub">GSM8K 7K+<br>GRPOTrainer</div>
+        </div>
+      </div>
+    </div>
+    <!-- LoRA → -->
+    <div class="arrow-wrap">
+      <div class="arrow-line"></div>
+      <div class="arrow-label">LoRA → 🤗</div>
+    </div>
+    <!-- Eval -->
+    <div class="stage-wrap">
+      <div class="stage" onclick="showDetail('eval')">
+        <div class="stage-box s-eval" id="box-eval">
+          <div class="tag">Stage 4 · Eval</div>
+          <div class="label">Evaluation</div>
+          <div class="sub">GSM8K acc<br>+ win rate</div>
+        </div>
+      </div>
+    </div>
+    <!-- → -->
+    <div class="arrow-wrap"><div class="arrow-line"></div></div>
+    <!-- Merge -->
+    <div class="stage-wrap">
+      <div class="stage" onclick="showDetail('merge')">
+        <div class="stage-box s-merge" id="box-merge">
+          <div class="tag">Stage 5</div>
+          <div class="label">Merge &amp; Push</div>
+          <div class="sub">Full-precision<br>float16 → 🤗</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hub row -->
+  <div class="hub-row">
+    <div class="hub-label">🤗 HuggingFace Hub<br><span style="font-size:10px;font-weight:400;color:var(--text3)">Load-bearing checkpoints</span></div>
+    <div class="hub-adapters">
+      <span class="hub-chip" onclick="showDetail('sft')"><span class="dot dot-teal"></span>Qwen2.5-1.5B-SFT-2026</span>
+      <span class="hub-chip" onclick="showDetail('simpo')"><span class="dot dot-amber"></span>Qwen2.5-1.5B-SimPO-2026</span>
+      <span class="hub-chip" onclick="showDetail('grpo')"><span class="dot dot-coral"></span>Qwen2.5-1.5B-GRPO-2026</span>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="detail-panel" id="detail-panel">
+    <h3 id="detail-title">Select a stage above</h3>
+    <p id="detail-desc" style="color:var(--text3)">Click any stage box or Hub adapter chip to see configuration details.</p>
+    <div class="detail-grid" id="detail-grid"></div>
+  </div>
+</div>
+
+<!-- Benchmark card -->
+<div class="card">
+  <div class="bench-title">Benchmark Results — GSM8K Accuracy Across Stages</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>GSM8K Accuracy</th>
+        <th>vs Prev Win Rate</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>base</td>
+        <td>
+          <div class="acc-bar-wrap">
+            <div class="acc-bar-bg"><div class="acc-bar-fill" style="width:23%;background:var(--gray-stroke)"></div></div>
+            <span class="acc-num" style="color:var(--gray-text)">23%</span>
+          </div>
+        </td>
+        <td><span style="color:var(--text3)">—</span></td>
+        <td style="color:var(--text3);font-size:12px">No fine-tuning</td>
+      </tr>
+      <tr>
+        <td>SFT</td>
+        <td>
+          <div class="acc-bar-wrap">
+            <div class="acc-bar-bg"><div class="acc-bar-fill" style="width:42%;background:var(--teal-stroke)"></div></div>
+            <span class="acc-num" style="color:var(--teal-text)">42%</span>
+          </div>
+        </td>
+        <td><span style="color:var(--text3)">—</span></td>
+        <td style="color:var(--text3);font-size:12px">SmolTalk 15K</td>
+      </tr>
+      <tr>
+        <td>SimPO</td>
+        <td>
+          <div class="acc-bar-wrap">
+            <div class="acc-bar-bg"><div class="acc-bar-fill" style="width:47%;background:var(--amber-stroke)"></div></div>
+            <span class="acc-num" style="color:var(--amber-text)">47%</span>
+          </div>
+        </td>
+        <td><span class="win-chip" style="background:rgba(186,117,23,0.15);color:var(--amber-text)">58.3%</span></td>
+        <td style="color:var(--text3);font-size:12px">UltraFeedback 5K</td>
+      </tr>
+      <tr class="best">
+        <td>GRPO</td>
+        <td>
+          <div class="acc-bar-wrap">
+            <div class="acc-bar-bg"><div class="acc-bar-fill" style="width:61%;background:var(--green-stroke)"></div></div>
+            <span class="acc-num" style="color:var(--green-text)">61%</span>
+          </div>
+        </td>
+        <td><span class="win-chip" style="background:rgba(59,109,17,0.2);color:var(--green-text)">64.7%</span></td>
+        <td style="color:var(--text2);font-size:12px">GSM8K 300 steps</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>hemanthrajelangovan · PostTraining 2026 · MIT License</footer>
+
+<script>
+const DETAILS = {
+  base: {
+    title: 'Base Model — Qwen2.5-1.5B-Instruct',
+    desc: 'Starting point for the entire pipeline. Loaded in 4-bit NF4 quantization via bitsandbytes. Peak VRAM stays under 12 GB throughout training.',
+    color: 'var(--gray-text)',
+    stats: [
+      { k: 'Model', v: 'Qwen2.5-1.5B' },
+      { k: 'Quantization', v: '4-bit NF4' },
+      { k: 'Peak VRAM', v: '< 12 GB' },
+      { k: 'Framework', v: 'Unsloth' },
+    ]
+  },
+  sft: {
+    title: 'Stage 1 — Supervised Fine-Tuning (SFT)',
+    desc: 'Fine-tunes the base model on instruction-following using SmolTalk. Uses sequence packing for efficiency. Pushes LoRA adapter to Hub after training.',
+    color: 'var(--teal-text)',
+    stats: [
+      { k: 'Dataset', v: 'SmolTalk 15K' },
+      { k: 'LoRA rank', v: '64 (rsLoRA)' },
+      { k: 'LoRA alpha', v: '128' },
+      { k: 'Max seq len', v: '2048' },
+      { k: 'Hub repo', v: 'SFT-2026' },
+      { k: 'Est. time', v: '~45 min T4' },
+    ]
+  },
+  simpo: {
+    title: 'Stage 2 — SimPO Preference Optimization',
+    desc: 'Loads the SFT adapter from Hub and aligns preferences using SimPO loss via CPOTrainer. Filters UltraFeedback to top-5K pairs by score margin ≥ 2.',
+    color: 'var(--amber-text)',
+    stats: [
+      { k: 'Dataset', v: 'UltraFeedback 5K' },
+      { k: 'Trainer', v: 'CPOTrainer' },
+      { k: 'beta', v: '2.5' },
+      { k: 'simpo_gamma', v: '0.8' },
+      { k: 'Min margin', v: '≥ 2.0' },
+      { k: 'Est. time', v: '~30 min T4' },
+    ]
+  },
+  grpo: {
+    title: 'Stage 3 — GRPO Reasoning (Group-Relative Policy Optimization)',
+    desc: 'Loads SimPO adapter from Hub and trains with 4 reward signals on GSM8K math problems. Uses 8 rollouts per prompt. Requires TRL reinstall — always restart kernel after install cell.',
+    color: 'var(--coral-text)',
+    stats: [
+      { k: 'Dataset', v: 'GSM8K 7,473' },
+      { k: 'Rollouts', v: '8 per prompt' },
+      { k: 'Steps', v: '300' },
+      { k: 'KL beta', v: '0.001' },
+      { k: 'Reward signals', v: '4' },
+      { k: 'Est. time', v: '~90 min T4' },
+    ]
+  },
+  eval: {
+    title: 'Stage 4 — Evaluation',
+    desc: 'Loads all 4 model variants sequentially and benchmarks them. Scores GSM8K accuracy on 100 samples per model and computes pairwise win rates judged by Qwen2.5-72B-Instruct.',
+    color: 'var(--purple-text)',
+    stats: [
+      { k: 'GSM8K samples', v: '100 per model' },
+      { k: 'Judge model', v: 'Qwen2.5-72B' },
+      { k: 'Eval prompts', v: '10 curated' },
+      { k: 'Output', v: 'final_results.json' },
+    ]
+  },
+  merge: {
+    title: 'Stage 5 — Merge & Push',
+    desc: 'Merges each LoRA adapter into the base model at full float16 precision and publishes merged models to HuggingFace Hub.',
+    color: 'var(--blue-text)',
+    stats: [
+      { k: 'Precision', v: 'float16' },
+      { k: 'SFT merged', v: 'SFT-merged-2026' },
+      { k: 'SimPO merged', v: 'SimPO-merged-2026' },
+      { k: 'GRPO merged', v: 'GRPO-merged-2026' },
+    ]
+  },
+};
+
+const ALL_BOXES = ['base','sft','simpo','grpo','eval','merge'];
+
+function showDetail(id) {
+  const d = DETAILS[id];
+  if (!d) return;
+
+  ALL_BOXES.forEach(b => {
+    const el = document.getElementById('box-' + b);
+    if (el) el.classList.remove('active');
+  });
+  const active = document.getElementById('box-' + id);
+  if (active) active.classList.add('active');
+
+  document.getElementById('detail-title').textContent = d.title;
+  document.getElementById('detail-title').style.color = d.color;
+  document.getElementById('detail-desc').textContent = d.desc;
+  document.getElementById('detail-desc').style.color = 'var(--text2)';
+
+  const grid = document.getElementById('detail-grid');
+  grid.innerHTML = d.stats.map(s => `
+    <div class="detail-stat">
+      <div class="sk">${s.k}</div>
+      <div class="sv" style="color:${d.color}">${s.v}</div>
+    </div>
+  `).join('');
+}
+
+// Show base by default
+showDetail('base');
+</script>
+</body>
+</html>
