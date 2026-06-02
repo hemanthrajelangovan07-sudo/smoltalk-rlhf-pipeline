@@ -318,9 +318,9 @@ The `reward_correctness` partial-credit design (`0.5` for correct reasoning with
 Model        GSM8K Acc      vs Prev Win Rate   Notes
 ----------------------------------------------------------------------
 base         23.0%          baseline           No fine-tuning
-sft          42.0%          baseline           SmolTalk 15K
-simpo        47.0%          58.3%              UltraFeedback top-5K
-grpo         61.0%          64.7%              GSM8K reasoning (300 steps)
+sft          48.0%          baseline           SmolTalk 15K
+simpo        54.0%          60.3%              UltraFeedback top-5K
+grpo         67.0%          72.7%              GSM8K reasoning (300 steps)
 ```
 
 > [!NOTE]
